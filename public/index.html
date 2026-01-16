@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIDEO_NEXUS // 下载终端</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 扫描线效果 -->
+    <div class="scanlines"></div>
+    
+    <!-- 动态背景 -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1 class="logo">
+                        <span class="logo-bracket">&lt;</span>
+                        VIDEO<span class="logo-accent">_</span>NEXUS
+                        <span class="logo-bracket">/&gt;</span>
+                    </h1>
+                    <div class="logo-subtitle">视频下载终端 v2.0</div>
+                </div>
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">系统在线</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主面板 -->
+        <main class="main-panel">
+            <!-- 输入区域 -->
+            <section class="input-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="section-icon">▶</span>
+                        视频源
+                    </h2>
+                </div>
+                
+                <div class="url-input-wrapper">
+                    <input 
+                        type="text" 
+                        id="urlInput" 
+                        class="url-input" 
+                        placeholder="输入视频 URL (YouTube, Bilibili, etc.)"
+                        autocomplete="off"
+                    >
+                    <button class="fetch-btn" id="fetchBtn" title="获取视频信息">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- 视频信息卡片 -->
+                <div class="video-info" id="videoInfo" style="display: none;">
+                    <div class="info-thumbnail" id="videoThumbnail"></div>
+                    <div class="info-details">
+                        <h3 class="info-title" id="videoTitle">视频标题</h3>
+                        <div class="info-meta">
+                            <span class="meta-item">
+                                <span class="meta-icon">👤</span>
+                                <span id="videoUploader">UP主</span>
+                            </span>
+                            <span class="meta-item">
+                                <span class="meta-icon">⏱</span>
+                                <span id="videoDuration">00:00</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 设置区域 -->
+            <section class="settings-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="section-icon">⚙</span>
+                        下载参数
+                    </h2>
+                </div>
+
+                <!-- 下载类型选择器 -->
+                <div class="type-selector">
+                    <label class="selector-label">下载类型</label>
+                    <div class="type-options">
+                        <label class="type-option">
+                            <input type="radio" name="downloadType" value="video+audio" checked>
+                            <span class="type-btn">
+                                <span class="type-icon">🎬</span>
+                                <span class="type-text">视频 + 音频</span>
+                            </span>
+                        </label>
+                        <label class="type-option">
+                            <input type="radio" name="downloadType" value="audio">
+                            <span class="type-btn">
+                                <span class="type-icon">🎵</span>
+                                <span class="type-text">仅音频</span>
+                            </span>
+                        </label>
+                        <label class="type-option">
+                            <input type="radio" name="downloadType" value="video">
+                            <span class="type-btn">
+                                <span class="type-icon">🎥</span>
+                                <span class="type-text">仅视频</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="quality-selector">
+                    <label class="selector-label">选择清晰度</label>
+                    <div class="quality-options">
+                        <label class="quality-option">
+                            <input type="radio" name="quality" value="4K" data-max="3840">
+                            <span class="quality-btn">
+                                <span class="quality-res">4K</span>
+                                <span class="quality-detail">2160p</span>
+                            </span>
+                        </label>
+                        <label class="quality-option">
+                            <input type="radio" name="quality" value="2K" data-max="2560">
+                            <span class="quality-btn">
+                                <span class="quality-res">2K</span>
+                                <span class="quality-detail">1440p</span>
+                            </span>
+                        </label>
+                        <label class="quality-option">
+                            <input type="radio" name="quality" value="1080P" data-max="1920" checked>
+                            <span class="quality-btn quality-btn-default">
+                                <span class="quality-res">1080P</span>
+                                <span class="quality-detail">FHD</span>
+                            </span>
+                        </label>
+                        <label class="quality-option">
+                            <input type="radio" name="quality" value="720P" data-max="1280">
+                            <span class="quality-btn">
+                                <span class="quality-res">720P</span>
+                                <span class="quality-detail">HD</span>
+                            </span>
+                        </label>
+                        <label class="quality-option">
+                            <input type="radio" name="quality" value="480P" data-max="854">
+                            <span class="quality-btn">
+                                <span class="quality-res">480P</span>
+                                <span class="quality-detail">SD</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <button class="download-btn" id="downloadBtn" title="获取视频信息并开始下载">
+                    <span class="btn-text">获取并下载</span>
+                    <span class="btn-icon">↓</span>
+                </button>
+            </section>
+
+            <!-- 进度区域 -->
+            <section class="progress-section" id="progressSection" style="display: none;">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="section-icon">⟳</span>
+                        下载进度
+                    </h2>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill">
+                                <div class="progress-glow"></div>
+                            </div>
+                        </div>
+                        <div class="progress-text" id="progressText">0%</div>
+                    </div>
+
+                    <div class="progress-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">速度</span>
+                            <span class="stat-value" id="downloadSpeed">--</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">预计时间</span>
+                            <span class="stat-value" id="etaTime">--</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">状态</span>
+                            <span class="stat-value" id="downloadStatus">等待中</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 完成区域 -->
+            <section class="complete-section" id="completeSection" style="display: none;">
+                <div class="complete-message">
+                    <div class="complete-icon">✓</div>
+                    <h3 class="complete-title">下载完成</h3>
+                    <p class="complete-info" id="completeInfo">文件已保存到 downloads 目录</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- 历史记录 -->
+        <aside class="history-panel">
+            <div class="history-header">
+                <h3 class="history-title">
+                    <span class="history-icon">📋</span>
+                    下载历史
+                </h3>
+                <button class="refresh-btn" id="refreshBtn" title="刷新列表">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M23 4v6h-6M1 20v-6h6" stroke-width="2"/>
+                        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" stroke-width="2"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="history-empty">暂无下载记录</div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 错误提示 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
