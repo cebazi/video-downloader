@@ -5,13 +5,12 @@ FROM node:18-slim
 RUN apt-get update && \
     apt-get install -y \
     ffmpeg \
-    python3 \
-    python3-pip \
     curl && \
     rm -rf /var/lib/apt/lists/*
 
-# 安装 yt-dlp
-RUN pip3 install --no-cache-dir yt-dlp
+# 安装 yt-dlp (直接下载二进制文件)
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+    chmod a+rx /usr/local/bin/yt-dlp
 
 # 设置工作目录
 WORKDIR /app
@@ -27,8 +26,8 @@ COPY . .
 
 # 设置环境变量
 ENV PORT=10000
-ENV YTDLP_PATH=yt-dlp
-ENV FFMPEG_PATH=ffmpeg
+ENV YTDLP_PATH=/usr/local/bin/yt-dlp
+ENV FFMPEG_PATH=/usr/bin/ffmpeg
 ENV NODE_ENV=production
 
 # 暴露端口
