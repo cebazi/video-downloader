@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: video-downloader
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: YTDLP_PATH
+        value: /usr/local/bin/yt-dlp
+      - key: FFMPEG_PATH
+        value: /usr/bin/ffmpeg
+      - key: NODE_ENV
+        value: production
