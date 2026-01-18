@@ -4,8 +4,8 @@ services:
     name: video-downloader
     runtime: node
     plan: starter
-    buildCommand: npm install
-    startCommand: bash install-deps.sh && node server.js
+    buildCommand: curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && chmod a+rx /usr/local/bin/yt-dlp && apt-get update && apt-get install -y ffmpeg && npm install
+    startCommand: node server.js
     envVars:
       - key: PORT
         value: 10000
@@ -13,5 +13,7 @@ services:
         value: /usr/local/bin/yt-dlp
       - key: FFMPEG_PATH
         value: /usr/local/bin/ffmpeg
+      - key: NODE_ENV
+        value: production
     region: singapore
 
