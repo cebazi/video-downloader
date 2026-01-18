@@ -14,5 +14,6 @@ echo Open: http://localhost:3000
 echo Press Ctrl+C to stop
 echo.
 
+set PORT=3002
 node server.js
 pause

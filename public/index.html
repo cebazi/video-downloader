@@ -3,223 +3,297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIDEO_NEXUS // 下载终端</title>
+    <title>NEXUS 下载终端</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- 粒子背景画布 -->
+    <canvas id="particles" class="particles-canvas"></canvas>
+    
     <!-- 扫描线效果 -->
     <div class="scanlines"></div>
+    <div class="scanlines-horizontal"></div>
     
-    <!-- 动态背景 -->
-    <div class="bg-grid"></div>
-    <div class="bg-glow"></div>
+    <!-- 动态光晕 -->
+    <div class="glow-blob glow-blob-1"></div>
+    <div class="glow-blob glow-blob-2"></div>
+    <div class="glow-blob glow-blob-3"></div>
+    
+    <!-- 网格背景 -->
+    <div class="grid-background"></div>
 
-    <div class="container">
+    <div class="app-container">
         <!-- 头部 -->
         <header class="header">
-            <div class="header-content">
-                <div class="logo-section">
-                    <h1 class="logo">
-                        <span class="logo-bracket">&lt;</span>
-                        VIDEO<span class="logo-accent">_</span>NEXUS
-                        <span class="logo-bracket">/&gt;</span>
-                    </h1>
-                    <div class="logo-subtitle">视频下载终端 v2.0</div>
+            <div class="header-left">
+                <div class="logo-container">
+                    <div class="logo-ring"></div>
+                    <div class="logo-icon">N</div>
                 </div>
-                <div class="status-indicator">
+                <div class="logo-text">
+                    <h1 class="logo-title">NEXUS</h1>
+                    <p class="logo-subtitle">视频下载终端 // v2.0</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="status-badge">
                     <span class="status-dot"></span>
                     <span class="status-text">系统在线</span>
                 </div>
             </div>
         </header>
 
-        <!-- 主面板 -->
-        <main class="main-panel">
-            <!-- 输入区域 -->
-            <section class="input-section">
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- URL 输入区 -->
+            <section class="section url-section" data-animate>
                 <div class="section-header">
-                    <h2 class="section-title">
-                        <span class="section-icon">▶</span>
-                        视频源
-                    </h2>
+                    <div class="section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">视频来源</h2>
+                    <div class="section-line"></div>
                 </div>
                 
-                <div class="url-input-wrapper">
-                    <input 
-                        type="text" 
-                        id="urlInput" 
-                        class="url-input" 
-                        placeholder="输入视频 URL (YouTube, Bilibili, etc.)"
-                        autocomplete="off"
-                    >
-                    <button class="fetch-btn" id="fetchBtn" title="获取视频信息">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/>
-                        </svg>
-                    </button>
+                <div class="url-input-container">
+                    <div class="input-wrapper">
+                        <div class="input-prefix">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke-width="2"/>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <input type="text" id="urlInput" class="url-input" placeholder="输入视频地址开始下载..." autocomplete="off">
+                        <button class="fetch-btn" id="fetchBtn" title="获取视频信息">
+                            <span class="btn-ripple"></span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/>
+                            </svg>
+                            <span class="btn-text">获取</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- 视频信息卡片 -->
-                <div class="video-info" id="videoInfo" style="display: none;">
-                    <div class="info-thumbnail" id="videoThumbnail"></div>
-                    <div class="info-details">
-                        <h3 class="info-title" id="videoTitle">视频标题</h3>
-                        <div class="info-meta">
-                            <span class="meta-item">
-                                <span class="meta-icon">👤</span>
-                                <span id="videoUploader">UP主</span>
-                            </span>
-                            <span class="meta-item">
-                                <span class="meta-icon">⏱</span>
+                <div class="video-card" id="videoCard">
+                    <div class="card-glow"></div>
+                    <div class="video-thumbnail" id="videoThumbnail">
+                        <div class="thumbnail-overlay">
+                            <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title" id="videoTitle">Video Title Placeholder</h3>
+                        <div class="video-meta">
+                            <div class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-width="2"/>
+                                </svg>
+                                <span id="videoUploader">Channel Name</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                                    <path d="M12 6v6l4 2" stroke-width="2"/>
+                                </svg>
                                 <span id="videoDuration">00:00</span>
-                            </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- 设置区域 -->
-            <section class="settings-section">
+            <!-- 下载配置区 -->
+            <section class="section config-section" data-animate>
                 <div class="section-header">
-                    <h2 class="section-title">
-                        <span class="section-icon">⚙</span>
-                        下载参数
-                    </h2>
+                    <div class="section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="3" stroke-width="2"/>
+                            <path d="M12 1v6m0 6v10M1 12h6m6 0h10" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">下载配置</h2>
+                    <div class="section-line"></div>
                 </div>
 
-                <!-- 下载类型选择器 -->
-                <div class="type-selector">
-                    <label class="selector-label">下载类型</label>
-                    <div class="type-options">
-                        <label class="type-option">
-                            <input type="radio" name="downloadType" value="video+audio" checked>
-                            <span class="type-btn">
-                                <span class="type-icon">🎬</span>
-                                <span class="type-text">视频 + 音频</span>
-                            </span>
-                        </label>
-                        <label class="type-option">
-                            <input type="radio" name="downloadType" value="audio">
-                            <span class="type-btn">
-                                <span class="type-icon">🎵</span>
-                                <span class="type-text">仅音频</span>
-                            </span>
-                        </label>
-                        <label class="type-option">
-                            <input type="radio" name="downloadType" value="video">
-                            <span class="type-btn">
-                                <span class="type-icon">🎥</span>
-                                <span class="type-text">仅视频</span>
-                            </span>
-                        </label>
+                <div class="config-grid">
+                    <!-- 下载类型 -->
+                    <div class="config-group">
+                        <label class="config-label">下载模式</label>
+                        <div class="option-grid">
+                            <label class="option-card selected">
+                                <input type="radio" name="downloadType" value="video+audio" checked>
+                                <div class="option-card-inner">
+                                    <div class="option-icon">🎬</div>
+                                    <div class="option-content">
+                                        <span class="option-title">视频 + 音频</span>
+                                        <span class="option-desc">完整下载</span>
+                                    </div>
+                                    <div class="option-check"></div>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="downloadType" value="audio">
+                                <div class="option-card-inner">
+                                    <div class="option-icon">🎵</div>
+                                    <div class="option-content">
+                                        <span class="option-title">仅音频</span>
+                                        <span class="option-desc">MP3 格式</span>
+                                    </div>
+                                    <div class="option-check"></div>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="downloadType" value="video">
+                                <div class="option-card-inner">
+                                    <div class="option-icon">🎥</div>
+                                    <div class="option-content">
+                                        <span class="option-title">仅视频</span>
+                                        <span class="option-desc">无音频轨道</span>
+                                    </div>
+                                    <div class="option-check"></div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 清晰度选择 -->
+                    <div class="config-group">
+                        <label class="config-label">清晰度选择</label>
+                        <div class="quality-grid">
+                            <label class="quality-btn">
+                                <input type="radio" name="quality" value="4K">
+                                <span class="quality-inner">4K</span>
+                            </label>
+                            <label class="quality-btn">
+                                <input type="radio" name="quality" value="2K">
+                                <span class="quality-inner">2K</span>
+                            </label>
+                            <label class="quality-btn active">
+                                <input type="radio" name="quality" value="1080P" checked>
+                                <span class="quality-inner">1080P</span>
+                            </label>
+                            <label class="quality-btn">
+                                <input type="radio" name="quality" value="720P">
+                                <span class="quality-inner">720P</span>
+                            </label>
+                            <label class="quality-btn">
+                                <input type="radio" name="quality" value="480P">
+                                <span class="quality-inner">480P</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
-                <div class="quality-selector">
-                    <label class="selector-label">选择清晰度</label>
-                    <div class="quality-options">
-                        <label class="quality-option">
-                            <input type="radio" name="quality" value="4K" data-max="3840">
-                            <span class="quality-btn">
-                                <span class="quality-res">4K</span>
-                                <span class="quality-detail">2160p</span>
-                            </span>
-                        </label>
-                        <label class="quality-option">
-                            <input type="radio" name="quality" value="2K" data-max="2560">
-                            <span class="quality-btn">
-                                <span class="quality-res">2K</span>
-                                <span class="quality-detail">1440p</span>
-                            </span>
-                        </label>
-                        <label class="quality-option">
-                            <input type="radio" name="quality" value="1080P" data-max="1920" checked>
-                            <span class="quality-btn quality-btn-default">
-                                <span class="quality-res">1080P</span>
-                                <span class="quality-detail">FHD</span>
-                            </span>
-                        </label>
-                        <label class="quality-option">
-                            <input type="radio" name="quality" value="720P" data-max="1280">
-                            <span class="quality-btn">
-                                <span class="quality-res">720P</span>
-                                <span class="quality-detail">HD</span>
-                            </span>
-                        </label>
-                        <label class="quality-option">
-                            <input type="radio" name="quality" value="480P" data-max="854">
-                            <span class="quality-btn">
-                                <span class="quality-res">480P</span>
-                                <span class="quality-detail">SD</span>
-                            </span>
-                        </label>
-                    </div>
-                </div>
-
-                <button class="download-btn" id="downloadBtn" title="获取视频信息并开始下载">
-                    <span class="btn-text">获取并下载</span>
-                    <span class="btn-icon">↓</span>
+                <!-- 下载按钮 -->
+                <button class="download-btn" id="downloadBtn">
+                    <span class="btn-bg"></span>
+                    <span class="btn-content">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-width="2"/>
+                            <polyline points="7 10 12 15 17 10" stroke-width="2"/>
+                            <line x1="12" y1="15" x2="12" y2="3" stroke-width="2"/>
+                        </svg>
+                        <span class="btn-text">开始下载</span>
+                    </span>
+                    <div class="btn-particles"></div>
                 </button>
             </section>
 
-            <!-- 进度区域 -->
-            <section class="progress-section" id="progressSection" style="display: none;">
+            <!-- 进度区 -->
+            <section class="section progress-section" id="progressSection" data-animate>
                 <div class="section-header">
-                    <h2 class="section-title">
-                        <span class="section-icon">⟳</span>
-                        下载进度
-                    </h2>
+                    <div class="section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">下载进度</h2>
+                    <div class="section-line"></div>
                 </div>
 
                 <div class="progress-container">
                     <div class="progress-bar-wrapper">
-                        <div class="progress-bar">
+                        <div class="progress-track">
                             <div class="progress-fill" id="progressFill">
                                 <div class="progress-glow"></div>
+                                <div class="progress-particles"></div>
                             </div>
                         </div>
-                        <div class="progress-text" id="progressText">0%</div>
+                        <div class="progress-percentage" id="progressText">0%</div>
                     </div>
 
                     <div class="progress-stats">
-                        <div class="stat-item">
-                            <span class="stat-label">速度</span>
-                            <span class="stat-value" id="downloadSpeed">--</span>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-label">下载速度</span>
+                                <span class="stat-value" id="downloadSpeed">--</span>
+                            </div>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-label">预计时间</span>
-                            <span class="stat-value" id="etaTime">--</span>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                                    <polyline points="12 6 12 12 16 14" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-label">预计时间</span>
+                                <span class="stat-value" id="etaTime">--</span>
+                            </div>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-label">状态</span>
-                            <span class="stat-value" id="downloadStatus">等待中</span>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-label">状态</span>
+                                <span class="stat-value" id="downloadStatus">就绪</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- 完成区域 -->
-            <section class="complete-section" id="completeSection" style="display: none;">
-                <div class="complete-message">
-                    <div class="complete-icon">✓</div>
+            <!-- 完成提示 -->
+            <section class="section complete-section" id="completeSection" data-animate>
+                <div class="complete-container">
+                    <div class="complete-icon-wrapper">
+                        <svg class="complete-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke-width="2"/>
+                            <polyline points="22 4 12 14.01 9 11.01" stroke-width="2"/>
+                        </svg>
+                        <div class="icon-ripple"></div>
+                    </div>
                     <h3 class="complete-title">下载完成</h3>
-                    <p class="complete-info" id="completeInfo">文件已保存到 downloads 目录</p>
+                    <p class="complete-info" id="completeInfo">文件已成功下载</p>
                 </div>
             </section>
         </main>
 
-        <!-- 历史记录 -->
-        <aside class="history-panel">
-            <div class="history-header">
-                <h3 class="history-title">
-                    <span class="history-icon">📋</span>
-                    下载历史
-                </h3>
-                <button class="refresh-btn" id="refreshBtn" title="刷新列表">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-width="2"/>
+                </svg>
+                <h3>下载历史</h3>
+                <button class="refresh-btn" id="refreshBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M23 4v6h-6M1 20v-6h6" stroke-width="2"/>
                         <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" stroke-width="2"/>
                     </svg>
@@ -231,10 +305,53 @@
         </aside>
     </div>
 
-    <!-- 错误提示 -->
+    <!-- 支持平台 -->
+    <footer class="platform-footer">
+        <p class="platform-text">支持全网视频</p>
+        <div class="platform-icons">
+            <div class="platform-icon" title="YouTube">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+            </div>
+            <div class="platform-icon" title="抖音">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                </svg>
+            </div>
+            <div class="platform-icon" title="快手">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.93 2.17C6.98 2.8 2.13 7.77 2.01 13.83c-.12 6.15 4.85 11.31 11 11.43 6.15.12 11.31-4.85 11.43-11 .01-.43 0-.86-.04-1.28h-2.02c.04.42.05.85.04 1.28-.09 4.96-4.2 8.92-9.16 8.84-4.96-.09-8.92-4.2-8.84-9.16.08-4.79 4-8.66 8.77-8.84v5.36l5.36-7.14-5.36-7.14v5.35h-.25z"/>
+                    <path d="M10.75 15.5l4.5-3.5-4.5-3.5v7z"/>
+                </svg>
+            </div>
+            <div class="platform-icon" title="哔哩哔哩">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906zM17.84 15.36c.533 0 .894-.36 1.08-.893.187-.534.28-.925.28-1.174v-5.2c0-.249-.093-.64-.28-1.174-.186-.533-.547-.893-1.08-.893h-1.04l-.667 3.76h-1.413l.667-3.76H8.6l-.667 3.76H6.52l.667-3.76H5.333c-.533 0-.894.36-1.08.893-.187.534-.28.925-.28 1.174v5.2c0 .249.093.64.28 1.174.186.533.547.893 1.08.893h12.507z"/>
+                </svg>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast 通知 -->
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="app.js"></script>
+    <script>
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', () => {
+            const sections = document.querySelectorAll('[data-animate]');
+            sections.forEach((section, index) => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(30px)';
+                setTimeout(() => {
+                    section.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+                    section.style.opacity = '1';
+                    section.style.transform = 'translateY(0)';
+                }, 100 * index);
+            });
+        });
+    </script>
 </body>
 </html>

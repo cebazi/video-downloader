@@ -126,12 +126,14 @@ const DOWNLOAD_DIR = path.join(__dirname, 'downloads');
 
 ### 修改工具路径
 
-编辑 `server.js` 中的路径配置：
+**本地开发**：编辑 `.env` 文件或使用默认路径
 
-```javascript
-const YTDLP_PATH = 'E:\\yt-dlp.exe';
-const FFMPEG_PATH = 'E:\\ffmpeg.exe';
+```env
+YTDLP_PATH=E:\\yt-dlp\\yt-dlp.exe
+FFMPEG_PATH=E:\\ffmpeg\\ffmpeg.exe
 ```
+
+**云端部署（Render）**：环境变量会自动配置
 
 ### 修改端口
 
@@ -146,6 +148,23 @@ const PORT = process.env.PORT || 3000;
 ```bash
 PORT=8080 npm start
 ```
+
+## 🌐 云端部署
+
+### 部署到 Render
+
+项目已配置好 `render.yaml`，可以一键部署到 Render：
+
+1. **查看部署指南**：[DEPLOYMENT.md](./DEPLOYMENT.md)
+2. **快速部署**：双击运行 `deploy.bat` 推送到 GitHub
+3. **在 Render 创建服务**：连接 GitHub 仓库并部署
+
+**部署地址示例**：`https://video-downloader.onrender.com`
+
+### 支持的平台
+
+- ✅ **Render** - 推荐用于生产环境
+- ⚠️ **本地运行** - 适合开发测试
 
 ## 故障排除
 

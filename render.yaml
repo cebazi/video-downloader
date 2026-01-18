@@ -1,0 +1,17 @@
+services:
+  # Web Service
+  - type: web
+    name: video-downloader
+    runtime: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: chmod +x install-deps.sh && ./install-deps.sh && node server.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: YTDLP_PATH
+        value: /usr/local/bin/yt-dlp
+      - key: FFMPEG_PATH
+        value: /usr/local/bin/ffmpeg
+    region: singapore
+

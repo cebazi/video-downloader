@@ -7,7 +7,7 @@ const fetchBtn = document.getElementById('fetchBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const refreshBtn = document.getElementById('refreshBtn');
 
-const videoInfo = document.getElementById('videoInfo');
+const videoCard = document.getElementById('videoCard');
 const videoThumbnail = document.getElementById('videoThumbnail');
 const videoTitle = document.getElementById('videoTitle');
 const videoUploader = document.getElementById('videoUploader');
@@ -35,7 +35,7 @@ function formatDuration(seconds) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
-  
+
   if (hours > 0) {
     return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
@@ -46,16 +46,16 @@ function formatDuration(seconds) {
 function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  
+
   const icon = type === 'error' ? '✕' : '✓';
-  
+
   toast.innerHTML = `
     <span class="toast-icon">${icon}</span>
     <span class="toast-message">${message}</span>
   `;
-  
+
   toastContainer.appendChild(toast);
-  
+
   setTimeout(() => {
     toast.style.animation = 'toastSlide 0.3s ease-out reverse';
     setTimeout(() => toast.remove(), 300);
@@ -65,46 +65,47 @@ function showToast(message, type = 'info') {
 // ===== 获取视频信息 =====
 async function fetchVideoInfo() {
   const url = urlInput.value.trim();
-  
+
   if (!url) {
     showToast('请输入视频 URL', 'error');
     return;
   }
-  
+
   fetchBtn.disabled = true;
   fetchBtn.innerHTML = '<span class="btn-loading">⟳</span>';
-  
+
   try {
     const response = await fetch('/api/info', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url })
     });
-    
+
     const data = await response.json();
-    
+
     if (data.error) {
       showToast(data.error, 'error');
       return;
     }
-    
+
     currentVideoInfo = data;
-    
-    // 显示视频信息
+
+    // 显示视频信息卡片
     videoThumbnail.style.backgroundImage = `url(${data.thumbnail})`;
     videoTitle.textContent = data.title;
     videoUploader.textContent = data.uploader;
     videoDuration.textContent = formatDuration(data.duration);
-    videoInfo.style.display = 'flex';
-    
+    videoCard.classList.add('active');
+
   } catch (error) {
     showToast('获取视频信息失败', 'error');
   } finally {
     fetchBtn.disabled = false;
     fetchBtn.innerHTML = `
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
         <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/>
       </svg>
+      <span class="btn-text">获取</span>
     `;
   }
 }
@@ -156,12 +157,12 @@ async function downloadVideo() {
       // 保存视频信息
       currentVideoInfo = infoData;
 
-      // 显示视频信息
+      // 显示视频信息卡片
       videoThumbnail.style.backgroundImage = `url(${infoData.thumbnail})`;
       videoTitle.textContent = infoData.title;
       videoUploader.textContent = infoData.uploader;
       videoDuration.textContent = formatDuration(infoData.duration);
-      videoInfo.style.display = 'flex';
+      videoCard.classList.add('active');
 
       showToast('视频信息已获取，开始下载...');
 
@@ -174,15 +175,16 @@ async function downloadVideo() {
   // 开始下载
   isDownloading = true;
   downloadBtn.disabled = true;
+  downloadBtn.classList.add('downloading');
 
   // 重置进度
-  progressSection.style.display = 'block';
-  completeSection.style.display = 'none';
+  progressSection.classList.add('active');
+  completeSection.classList.remove('active');
   progressFill.style.width = '0%';
   progressText.textContent = '0%';
   downloadSpeed.textContent = '--';
   etaTime.textContent = '--';
-  downloadStatus.textContent = '连接中...';
+  downloadStatus.textContent = '初始化中...';
 
   try {
     const response = await fetch('/api/download', {
@@ -202,12 +204,14 @@ async function downloadVideo() {
       showToast(data.error, 'error');
       isDownloading = false;
       downloadBtn.disabled = false;
+      downloadBtn.classList.remove('downloading');
     }
 
   } catch (error) {
     showToast('启动下载失败', 'error');
     isDownloading = false;
     downloadBtn.disabled = false;
+    downloadBtn.classList.remove('downloading');
   }
 }
 
@@ -222,14 +226,20 @@ async function loadHistory() {
       return;
     }
 
-    const typeIcon = (type) => type === 'audio' ? '🎵' : '🎬';
+    const typeIcon = (type) => type === 'audio' ?
+      '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>' :
+      '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>';
 
     historyList.innerHTML = files.map(file => `
       <div class="history-item">
         <span class="history-type-icon">${typeIcon(file.type)}</span>
         <span class="history-item-name" onclick="downloadFile('${file.filename}')" title="点击下载">${file.filename}</span>
         <span class="history-item-size">${file.size}</span>
-        <button class="history-delete" onclick="deleteFile('${file.filename}')" title="删除">✕</button>
+        <button class="history-delete" onclick="deleteFile('${file.filename}')" title="删除">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M18 6L6 18M6 6l12 12" stroke-width="2"/>
+          </svg>
+        </button>
       </div>
     `).join('');
 
@@ -330,9 +340,10 @@ socket.on('error', (error) => {
 socket.on('complete', async (data) => {
   isDownloading = false;
   downloadBtn.disabled = false;
+  downloadBtn.classList.remove('downloading');
 
-  progressSection.style.display = 'none';
-  completeSection.style.display = 'block';
+  progressSection.classList.remove('active');
+  completeSection.classList.add('active');
   completeInfo.textContent = `${data.filename} (${data.size})`;
 
   showToast('下载完成！正在保存到本地...');
@@ -370,9 +381,29 @@ socket.on('complete', async (data) => {
 socket.on('error', (data) => {
   isDownloading = false;
   downloadBtn.disabled = false;
-  
-  progressSection.style.display = 'none';
+  downloadBtn.classList.remove('downloading');
+
+  progressSection.classList.remove('active');
   showToast(data.error || '下载失败', 'error');
+});
+
+// ===== 选项卡交互 =====
+// 下载类型选项卡
+document.querySelectorAll('.option-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    card.querySelector('input').checked = true;
+  });
+});
+
+// 清晰度选项卡
+document.querySelectorAll('.quality-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    btn.querySelector('input').checked = true;
+  });
 });
 
 // ===== 事件监听 =====
@@ -391,21 +422,90 @@ urlInput.addEventListener('keypress', (e) => {
 // 当 URL 改变时，重置视频信息
 urlInput.addEventListener('input', () => {
   currentVideoInfo = null;
-  videoInfo.style.display = 'none';
+  videoCard.classList.remove('active');
 });
 
-// ===== 初始化 =====
-loadHistory();
+// ===== 粒子背景动画 =====
+class ParticleSystem {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.particles = [];
+    this.resize();
+    this.init();
 
-// ===== 页面加载动画 =====
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+
+  init() {
+    const particleCount = Math.floor((this.canvas.width * this.canvas.height) / 15000);
+
+    for (let i = 0; i < particleCount; i++) {
+      this.particles.push({
+        x: Math.random() * this.canvas.width,
+        y: Math.random() * this.canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        radius: Math.random() * 2 + 1,
+        opacity: Math.random() * 0.5 + 0.2
+      });
+    }
+  }
+
+  animate() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < 0) p.x = this.canvas.width;
+      if (p.x > this.canvas.width) p.x = 0;
+      if (p.y < 0) p.y = this.canvas.height;
+      if (p.y > this.canvas.height) p.y = 0;
+
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      this.ctx.fillStyle = `rgba(0, 255, 255, ${p.opacity})`;
+      this.ctx.fill();
+    });
+
+    // 绘制连线
+    this.particles.forEach((p1, i) => {
+      this.particles.slice(i + 1).forEach(p2 => {
+        const dx = p1.x - p2.x;
+        const dy = p1.y - p2.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 100) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(p1.x, p1.y);
+          this.ctx.lineTo(p2.x, p2.y);
+          this.ctx.strokeStyle = `rgba(0, 255, 255, ${0.1 * (1 - dist / 100)})`;
+          this.ctx.stroke();
+        }
+      });
+    });
+
+    requestAnimationFrame(() => this.animate());
+  }
+}
+
+// ===== 初始化 =====
 document.addEventListener('DOMContentLoaded', () => {
-  const container = document.querySelector('.container');
-  container.style.opacity = '0';
-  container.style.transform = 'translateY(20px)';
-  
-  setTimeout(() => {
-    container.style.transition = 'all 0.5s ease-out';
-    container.style.opacity = '1';
-    container.style.transform = 'translateY(0)';
-  }, 100);
+  // 初始化粒子背景
+  const particleCanvas = document.getElementById('particles');
+  if (particleCanvas) {
+    new ParticleSystem(particleCanvas).animate();
+  }
+
+  // 加载下载历史
+  loadHistory();
+
+  // 页面加载动画已在 HTML 中的 script 标签处理
 });

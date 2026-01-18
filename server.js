@@ -19,9 +19,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// 配置路径
-const YTDLP_PATH = 'E:\\yt-dlp\\yt-dlp.exe';
-const FFMPEG_PATH = 'E:\\ffmpeg\\ffmpeg-8.0.1-essentials_build\\bin\\ffmpeg.exe';
+// 配置路径 - 支持本地和云环境
+const YTDLP_PATH = process.env.YTDLP_PATH || 'yt-dlp';
+const FFMPEG_PATH = process.env.FFMPEG_PATH || 'ffmpeg';
 const DOWNLOAD_DIR = path.join(__dirname, 'downloads');
 
 // 确保下载目录存在
@@ -142,7 +142,7 @@ app.post('/api/download', async (req, res) => {
   // yt-dlp 参数
   const args = [
     '-f', format,
-    '--ffmpeg-location', 'E:\\ffmpeg\\ffmpeg-8.0.1-essentials_build\\bin',
+    '--ffmpeg-location', FFMPEG_PATH,
     '-o', outputFile,
     '--newline',
     '--no-playlist',
