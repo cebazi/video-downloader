@@ -1,19 +1,17 @@
 services:
-  # Web Service
+  # Web Service - 使用 Docker 部署
   - type: web
     name: video-downloader
-    runtime: node
+    env: docker
     plan: starter
-    buildCommand: curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && chmod a+rx /usr/local/bin/yt-dlp && apt-get update && apt-get install -y ffmpeg && npm install
-    startCommand: node server.js
+    region: singapore
     envVars:
       - key: PORT
         value: 10000
       - key: YTDLP_PATH
-        value: /usr/local/bin/yt-dlp
+        value: yt-dlp
       - key: FFMPEG_PATH
-        value: /usr/local/bin/ffmpeg
+        value: ffmpeg
       - key: NODE_ENV
         value: production
-    region: singapore
 
