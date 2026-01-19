@@ -43,9 +43,15 @@
                     <span class="status-dot"></span>
                     <span class="status-text">系统在线</span>
                 </div>
+                <button class="settings-btn" id="settingsBtn" title="设置">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="3" stroke-width="2"/>
+                        <path d="M12 1v6m0 6v10M1 12h6m6 0h10" stroke-width="2"/>
+                    </svg>
+                </button>
                 <button class="debug-btn" id="debugBtn" title="测试 YouTube 连接">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" stroke-width="2"/>
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3L6.91-7.94l3.76 3.76z" stroke-width="2"/>
                     </svg>
                 </button>
             </div>
@@ -340,6 +346,32 @@
 
     <!-- Toast 通知 -->
     <div class="toast-container" id="toastContainer"></div>
+
+    <!-- 设置面板 -->
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-backdrop" id="settingsBackdrop"></div>
+        <div class="settings-content">
+            <div class="settings-header">
+                <h2>设置</h2>
+                <button class="settings-close" id="settingsClose">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M18 6L6 18M6 6l12 12" stroke-width="2"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="settings-body">
+                <div class="settings-section">
+                    <h3>YouTube Cookies</h3>
+                    <p class="settings-desc">由于 Render IP 被 YouTube 限制，需要使用你的浏览器 cookies。请使用 Chrome 扩展 "<a href="https://chrome.google.com/webstore/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank">Get cookies.txt LOCALLY</a>" 导出 cookies。</p>
+                    <textarea id="cookiesInput" class="settings-textarea" placeholder="粘贴 cookies.txt 内容到这里..."></textarea>
+                    <div class="settings-actions">
+                        <button class="settings-save" id="cookiesSave">保存</button>
+                        <button class="settings-clear" id="cookiesClear">清除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="app.js"></script>

@@ -29,6 +29,57 @@ const toastContainer = document.getElementById('toastContainer');
 // ===== 状态 =====
 let currentVideoInfo = null;
 let isDownloading = false;
+let userCookies = localStorage.getItem('youtube_cookies') || '';
+
+// ===== 设置面板功能 =====
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsModal = document.getElementById('settingsModal');
+const settingsBackdrop = document.getElementById('settingsBackdrop');
+const settingsClose = document.getElementById('settingsClose');
+const cookiesInput = document.getElementById('cookiesInput');
+const cookiesSave = document.getElementById('cookiesSave');
+const cookiesClear = document.getElementById('cookiesClear');
+
+// 打开设置面板
+if (settingsBtn) {
+  settingsBtn.addEventListener('click', () => {
+    cookiesInput.value = userCookies;
+    settingsModal.classList.add('active');
+  });
+}
+
+// 关闭设置面板
+function closeSettings() {
+  settingsModal.classList.remove('active');
+}
+
+if (settingsClose) {
+  settingsClose.addEventListener('click', closeSettings);
+}
+
+if (settingsBackdrop) {
+  settingsBackdrop.addEventListener('click', closeSettings);
+}
+
+// 保存 cookies
+if (cookiesSave) {
+  cookiesSave.addEventListener('click', () => {
+    userCookies = cookiesInput.value.trim();
+    localStorage.setItem('youtube_cookies', userCookies);
+    showToast('Cookies 已保存', 'success');
+    closeSettings();
+  });
+}
+
+// 清除 cookies
+if (cookiesClear) {
+  cookiesClear.addEventListener('click', () => {
+    userCookies = '';
+    cookiesInput.value = '';
+    localStorage.removeItem('youtube_cookies');
+    showToast('Cookies 已清除', 'info');
+  });
+}
 
 // ===== 格式化时长 =====
 function formatDuration(seconds) {
@@ -78,7 +129,7 @@ async function fetchVideoInfo() {
     const response = await fetch('/api/info', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url })
+      body: JSON.stringify({ url, cookies: userCookies })
     });
 
     const data = await response.json();
@@ -88,6 +139,13 @@ async function fetchVideoInfo() {
       const errorMsg = data.error + (data.details ? `\n详细信息: ${data.details}` : '');
       showToast(errorMsg, 'error');
       console.error('获取视频信息失败:', data);
+
+      // 如果需要 cookies，提示用户
+      if (data.needCookies) {
+        setTimeout(() => {
+          settingsBtn?.click();
+        }, 2000);
+      }
       return;
     }
 
@@ -148,7 +206,7 @@ async function downloadVideo() {
       const infoResponse = await fetch('/api/info', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
+        body: JSON.stringify({ url, cookies: userCookies })
       });
 
       const infoData = await infoResponse.json();
@@ -198,7 +256,8 @@ async function downloadVideo() {
         url,
         quality,
         downloadType,
-        socketId: socket.id
+        socketId: socket.id,
+        cookies: userCookies
       })
     });
 

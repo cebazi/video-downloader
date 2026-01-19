@@ -1313,6 +1313,231 @@ body {
   gap: 10px;
 }
 
+/* ===== 设置按钮 ===== */
+.settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 12px;
+}
+
+.settings-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--color-cyan);
+  transition: all 0.3s ease;
+}
+
+.settings-btn:hover {
+  background: rgba(0, 255, 255, 0.2);
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.settings-btn:hover svg {
+  stroke: var(--color-blue);
+  transform: rotate(90deg);
+}
+
+/* ===== 设置面板 ===== */
+.settings-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.settings-modal.active {
+  display: block;
+  opacity: 1;
+}
+
+.settings-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+}
+
+.settings-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  background: rgba(10, 10, 16, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border-highlight);
+  border-radius: 20px;
+  box-shadow: var(--shadow-glow-strong);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-header h2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-cyan);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.settings-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.settings-close svg {
+  width: 20px;
+  height: 20px;
+  stroke: #ff4444;
+}
+
+.settings-close:hover {
+  background: rgba(255, 0, 0, 0.2);
+  border-color: #ff4444;
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+}
+
+.settings-body {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.settings-section {
+  margin-bottom: 24px;
+}
+
+.settings-section h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 12px;
+}
+
+.settings-desc {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.settings-desc a {
+  color: var(--color-cyan);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-cyan);
+}
+
+.settings-desc a:hover {
+  color: var(--color-pink);
+  border-color: var(--color-pink);
+}
+
+.settings-textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.settings-textarea:focus {
+  outline: none;
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+}
+
+.settings-textarea::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.settings-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.settings-save,
+.settings-clear {
+  padding: 12px 24px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.settings-save {
+  background: var(--gradient-primary);
+  border: none;
+  color: var(--color-text-primary);
+}
+
+.settings-save:hover {
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-2px);
+}
+
+.settings-clear {
+  background: transparent;
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  color: #ff4444;
+}
+
+.settings-clear:hover {
+  background: rgba(255, 0, 0, 0.1);
+  border-color: #ff4444;
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+}
+
 .toast {
   background: rgba(10, 10, 16, 0.95);
   backdrop-filter: blur(20px);

@@ -40,7 +40,7 @@ const QUALITY_MAP = {
 
 // 解析视频信息
 app.post('/api/info', async (req, res) => {
-  const { url } = req.body;
+  const { url, cookies } = req.body;
 
   if (!url) {
     return res.status(400).json({ error: '请提供视频URL' });
@@ -49,13 +49,22 @@ app.post('/api/info', async (req, res) => {
   console.log(`=== 获取视频信息 ===`);
   console.log(`URL: ${url}`);
   console.log(`检测域名: ${new URL(url).hostname}`);
+  console.log(`使用 cookies: ${cookies ? '是' : '否'}`);
 
-  const ytdlp = spawn(YTDLP_PATH, [
+  const args = [
     '--dump-json',
     '--no-playlist',
     '--no-warnings',
-    url
-  ]);
+  ];
+
+  // 如果提供了 cookies，使用它们
+  if (cookies && cookies.trim()) {
+    args.push('--cookies', cookies.trim());
+  }
+
+  args.push(url);
+
+  const ytdlp = spawn(YTDLP_PATH, args);
 
   let output = '';
   let error = '';
@@ -78,6 +87,16 @@ app.post('/api/info', async (req, res) => {
       console.error('获取视频信息失败');
       // 返回更详细的错误信息给前端
       const errorMsg = error || '无法获取视频信息';
+
+      // 检查是否是 YouTube 需要登录的错误
+      if (errorMsg.includes('Sign in to confirm') || errorMsg.includes('cookies')) {
+        return res.status(400).json({
+          error: 'YouTube 需要登录验证',
+          details: '请使用 Chrome 浏览器扩展 "Get cookies.txt LOCALLY" 导出 cookies，然后在设置中粘贴',
+          needCookies: true
+        });
+      }
+
       return res.status(400).json({
         error: '无法获取视频信息',
         details: errorMsg.substring(0, 200)
@@ -101,7 +120,7 @@ app.post('/api/info', async (req, res) => {
 
 // 下载视频
 app.post('/api/download', async (req, res) => {
-  const { url, quality, downloadType = 'video+audio', socketId } = req.body;
+  const { url, quality, downloadType = 'video+audio', socketId, cookies } = req.body;
 
   console.log(`=== 新下载请求 ===`);
   console.log(`URL: ${url}`);
@@ -164,8 +183,14 @@ app.post('/api/download', async (req, res) => {
     '--newline',
     '--no-playlist',
     ...extraArgs,
-    url
   ];
+
+  // 如果提供了 cookies，添加到参数
+  if (cookies && cookies.trim()) {
+    args.push('--cookies', cookies.trim());
+  }
+
+  args.push(url);
 
   console.log(`输出文件: ${outputFile}`);
   console.log(`yt-dlp 命令: ${YTDLP_PATH} ${args.join(' ')}`);
