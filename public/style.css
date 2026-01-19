@@ -339,10 +339,50 @@ body {
 }
 
 .status-text {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
   color: var(--color-cyan);
-  letter-spacing: 2px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ===== 调试按钮 ===== */
+.debug-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(191, 0, 255, 0.1);
+  border: 1px solid rgba(191, 0, 255, 0.3);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 12px;
+}
+
+.debug-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--color-purple);
+  transition: all 0.3s ease;
+}
+
+.debug-btn:hover {
+  background: rgba(191, 0, 255, 0.2);
+  border-color: var(--color-purple);
+  box-shadow: 0 0 20px rgba(191, 0, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.debug-btn:hover svg {
+  stroke: var(--color-pink);
+  transform: rotate(45deg);
+}
+
+.debug-btn:active {
+  transform: translateY(0);
 }
 
 /* ===== 主内容区 ===== */

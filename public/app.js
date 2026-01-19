@@ -84,7 +84,10 @@ async function fetchVideoInfo() {
     const data = await response.json();
 
     if (data.error) {
-      showToast(data.error, 'error');
+      // 显示更详细的错误信息
+      const errorMsg = data.error + (data.details ? `\n详细信息: ${data.details}` : '');
+      showToast(errorMsg, 'error');
+      console.error('获取视频信息失败:', data);
       return;
     }
 
@@ -99,6 +102,7 @@ async function fetchVideoInfo() {
 
   } catch (error) {
     showToast('获取视频信息失败', 'error');
+    console.error('获取视频信息异常:', error);
   } finally {
     fetchBtn.disabled = false;
     fetchBtn.innerHTML = `
@@ -424,6 +428,38 @@ urlInput.addEventListener('input', () => {
   currentVideoInfo = null;
   videoCard.classList.remove('active');
 });
+
+// ===== 调试功能 - 测试 YouTube 连接 =====
+const debugBtn = document.getElementById('debugBtn');
+if (debugBtn) {
+  debugBtn.addEventListener('click', async () => {
+    showToast('正在测试 YouTube 连接...', 'info');
+
+    try {
+      // 先检查系统状态
+      const debugResponse = await fetch('/api/debug');
+      const debugInfo = await debugResponse.json();
+
+      console.log('系统信息:', debugInfo);
+      showToast(`yt-dlp 版本: ${debugInfo.ytdlp_version}`, 'info');
+
+      // 测试 YouTube 连接
+      const ytResponse = await fetch('/api/test-youtube');
+      const ytResult = await ytResponse.json();
+
+      if (ytResult.success) {
+        showToast(`✓ YouTube 连接正常!\n测试视频: ${ytResult.title}`, 'success');
+      } else {
+        showToast(`✗ YouTube 连接失败!\n${ytResult.message}\n${ytResult.error || ''}`, 'error');
+        console.error('YouTube 测试失败:', ytResult);
+      }
+
+    } catch (error) {
+      showToast('调试请求失败', 'error');
+      console.error('调试错误:', error);
+    }
+  });
+}
 
 // ===== 粒子背景动画 =====
 class ParticleSystem {

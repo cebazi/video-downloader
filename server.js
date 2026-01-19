@@ -41,14 +41,19 @@ const QUALITY_MAP = {
 // 解析视频信息
 app.post('/api/info', async (req, res) => {
   const { url } = req.body;
-  
+
   if (!url) {
     return res.status(400).json({ error: '请提供视频URL' });
   }
 
+  console.log(`=== 获取视频信息 ===`);
+  console.log(`URL: ${url}`);
+  console.log(`检测域名: ${new URL(url).hostname}`);
+
   const ytdlp = spawn(YTDLP_PATH, [
     '--dump-json',
     '--no-playlist',
+    '--no-warnings',
     url
   ]);
 
@@ -64,8 +69,19 @@ app.post('/api/info', async (req, res) => {
   });
 
   ytdlp.on('close', (code) => {
+    console.log(`yt-dlp 退出码: ${code}`);
+    if (error) {
+      console.log(`stderr: ${error}`);
+    }
+
     if (code !== 0) {
-      return res.status(400).json({ error: '无法获取视频信息，请检查URL是否正确' });
+      console.error('获取视频信息失败');
+      // 返回更详细的错误信息给前端
+      const errorMsg = error || '无法获取视频信息';
+      return res.status(400).json({
+        error: '无法获取视频信息',
+        details: errorMsg.substring(0, 200)
+      });
     }
 
     try {
@@ -77,6 +93,7 @@ app.post('/api/info', async (req, res) => {
         thumbnail: info.thumbnail
       });
     } catch (e) {
+      console.error('JSON 解析失败:', e.message);
       res.status(500).json({ error: '解析视频信息失败' });
     }
   });
@@ -340,6 +357,82 @@ app.get('/api/downloads', (req, res) => {
     .sort((a, b) => b.created - a.created);
 
   res.json(files);
+});
+
+// 调试端点 - 检查 yt-dlp 状态
+app.get('/api/debug', (req, res) => {
+  const ytdlp = spawn(YTDLP_PATH, ['--version']);
+
+  let output = '';
+  let error = '';
+
+  ytdlp.stdout.on('data', (data) => {
+    output += data.toString();
+  });
+
+  ytdlp.stderr.on('data', (data) => {
+    error += data.toString();
+  });
+
+  ytdlp.on('close', (code) => {
+    res.json({
+      ytdlp_path: YTDLP_PATH,
+      ytdlp_version: output.trim() || 'unknown',
+      ffmpeg_path: FFMPEG_PATH,
+      node_version: process.version,
+      platform: process.platform,
+      exit_code: code,
+      error: error || null
+    });
+  });
+});
+
+// 测试 YouTube 连接
+app.get('/api/test-youtube', (req, res) => {
+  const testUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'; // Rick Roll，用于测试
+
+  const ytdlp = spawn(YTDLP_PATH, [
+    '--dump-json',
+    '--no-playlist',
+    '--no-warnings',
+    testUrl
+  ]);
+
+  let output = '';
+  let error = '';
+
+  ytdlp.stdout.on('data', (data) => {
+    output += data.toString();
+  });
+
+  ytdlp.stderr.on('data', (data) => {
+    error += data.toString();
+  });
+
+  ytdlp.on('close', (code) => {
+    if (code === 0) {
+      try {
+        const info = JSON.parse(output);
+        res.json({
+          success: true,
+          title: info.title,
+          message: 'YouTube 连接正常'
+        });
+      } catch (e) {
+        res.json({
+          success: false,
+          message: '解析失败',
+          error: e.message
+        });
+      }
+    } else {
+      res.json({
+        success: false,
+        message: 'YouTube 连接失败',
+        error: error.substring(0, 500)
+      });
+    }
+  });
 });
 
 // Socket.IO 连接处理
