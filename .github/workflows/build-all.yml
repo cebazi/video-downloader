@@ -130,7 +130,7 @@ jobs:
 
   build-macos-intel:
     name: 🍎 Build macOS (Intel)
-    runs-on: [macos-13]  # Intel Mac runner
+    runs-on: [macos-15-intel]  # 使用最新的 Intel Mac runner
 
     steps:
       - name: Checkout code
