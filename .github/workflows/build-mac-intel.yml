@@ -1,0 +1,76 @@
+name: Build macOS Intel Only
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'server.js'
+      - 'electron-main.js'
+      - 'electron-preload.js'
+      - 'public/**'
+      - 'package.json'
+      - '.github/workflows/build-mac-intel.yml'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-macos-intel:
+    name: 🍎 Build macOS (Intel)
+    runs-on: [macos-15-intel]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download yt-dlp for macOS
+        run: |
+          mkdir -p tools-mac
+          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o tools-mac/yt-dlp
+          chmod +x tools-mac/yt-dlp
+          echo "✅ yt-dlp version:"
+          ./tools-mac/yt-dlp --version
+
+      - name: Install ffmpeg
+        run: |
+          brew install ffmpeg
+          mkdir -p tools-mac/ffmpeg
+          cp $(which ffmpeg) tools-mac/ffmpeg/
+          echo "✅ ffmpeg version:"
+          tools-mac/ffmpeg/ffmpeg -version | head -1
+
+      - name: Build macOS Intel app
+        run: npx electron-builder --mac --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_NAME_DISAMBIGUATOR: ''
+
+      - name: List output files
+        run: |
+          echo "📦 macOS Intel Build artifacts:"
+          ls -lh dist-v5/ || echo "No files found"
+
+      - name: Upload Intel DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-Intel-DMG
+          path: dist-v5/*-x64.dmg
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload Intel ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-Intel-ZIP
+          path: dist-v5/*-x64.zip
+          retention-days: 30
+          if-no-files-found: warn
