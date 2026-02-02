@@ -69,9 +69,9 @@ jobs:
           path: dist-v5/*.exe
           retention-days: 30
 
-  build-macos:
-    name: 🍎 Build macOS
-    runs-on: macos-latest
+  build-macos-apple-silicon:
+    name: 🍎 Build macOS (Apple Silicon)
+    runs-on: [macos-latest]
 
     steps:
       - name: Checkout code
@@ -102,10 +102,91 @@ jobs:
           echo "✅ ffmpeg version:"
           tools-mac/ffmpeg/ffmpeg -version | head -1
 
-      - name: Build macOS app (Intel & Apple Silicon)
-        run: npm run build:mac
+      - name: Build macOS Apple Silicon app
+        run: npx electron-builder --mac --arm64
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List output files
+        run: |
+          echo "📦 macOS Apple Silicon Build artifacts:"
+          ls -lh dist-v5/ || echo "No files found"
+
+      - name: Upload Apple Silicon DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-AppleSilicon-DMG
+          path: dist-v5/*-arm64.dmg
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Upload Apple Silicon ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-AppleSilicon-ZIP
+          path: dist-v5/*-arm64.zip
+          retention-days: 30
+          if-no-files-found: ignore
+
+  build-macos-intel:
+    name: 🍎 Build macOS (Intel)
+    runs-on: [macos-13]  # Intel Mac runner
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download yt-dlp for macOS
+        run: |
+          mkdir -p tools-mac
+          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o tools-mac/yt-dlp
+          chmod +x tools-mac/yt-dlp
+          echo "✅ yt-dlp version:"
+          ./tools-mac/yt-dlp --version
+
+      - name: Install ffmpeg
+        run: |
+          brew install ffmpeg
+          mkdir -p tools-mac/ffmpeg
+          cp $(which ffmpeg) tools-mac/ffmpeg/
+          echo "✅ ffmpeg version:"
+          tools-mac/ffmpeg/ffmpeg -version | head -1
+
+      - name: Build macOS Intel app
+        run: npx electron-builder --mac --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_NAME_DISAMBIGUATOR: ''
+
+      - name: List output files
+        run: |
+          echo "📦 macOS Intel Build artifacts:"
+          ls -lh dist-v5/ || echo "No files found"
+
+      - name: Upload Intel DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-Intel-DMG
+          path: dist-v5/*-x64.dmg
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Upload Intel ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-Intel-ZIP
+          path: dist-v5/*-x64.zip
+          retention-days: 30
+          if-no-files-found: ignore
 
       - name: List output files
         run: |
@@ -142,7 +223,7 @@ jobs:
 
   create-release:
     name: 📦 Create Release
-    needs: [build-windows, build-macos]
+    needs: [build-windows, build-macos-intel, build-macos-apple-silicon]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v') || inputs.create_release == true
 
