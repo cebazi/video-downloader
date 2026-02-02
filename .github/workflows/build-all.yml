@@ -178,7 +178,7 @@ jobs:
           name: macOS-Intel-DMG
           path: dist-v5/*-x64.dmg
           retention-days: 30
-          if-no-files-found: ignore
+          if-no-files-found: warn
 
       - name: Upload Intel ZIP
         uses: actions/upload-artifact@v4
@@ -186,40 +186,7 @@ jobs:
           name: macOS-Intel-ZIP
           path: dist-v5/*-x64.zip
           retention-days: 30
-          if-no-files-found: ignore
-
-      - name: List output files
-        run: |
-          echo "📦 macOS Build artifacts:"
-          ls -lh dist-v5/
-
-      - name: Upload Intel DMG
-        uses: actions/upload-artifact@v4
-        with:
-          name: macOS-Intel-DMG
-          path: dist-v5/*-x64.dmg
-          retention-days: 30
-
-      - name: Upload Intel ZIP
-        uses: actions/upload-artifact@v4
-        with:
-          name: macOS-Intel-ZIP
-          path: dist-v5/*-x64.zip
-          retention-days: 30
-
-      - name: Upload Apple Silicon DMG
-        uses: actions/upload-artifact@v4
-        with:
-          name: macOS-AppleSilicon-DMG
-          path: dist-v5/*-arm64.dmg
-          retention-days: 30
-
-      - name: Upload Apple Silicon ZIP
-        uses: actions/upload-artifact@v4
-        with:
-          name: macOS-AppleSilicon-ZIP
-          path: dist-v5/*-arm64.zip
-          retention-days: 30
+          if-no-files-found: warn
 
   create-release:
     name: 📦 Create Release
