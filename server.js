@@ -20,9 +20,47 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // 配置路径 - 支持本地和云环境
-const YTDLP_PATH = process.env.YTDLP_PATH || 'yt-dlp';
-const FFMPEG_PATH = process.env.FFMPEG_PATH || 'ffmpeg';
-const DOWNLOAD_DIR = path.join(__dirname, 'downloads');
+// 检测平台
+const isMac = process.platform === 'darwin';
+const isWin = process.platform === 'win32';
+const isLinux = process.platform === 'linux';
+
+// 设置工具目录和路径
+let TOOLS_DIR, YTDLP_PATH, FFMPEG_PATH;
+
+// 在打包后的应用中，工具位于 resources 目录
+const isPackaged = process.resourcesPath && fs.existsSync(path.join(process.resourcesPath, 'tools'));
+
+if (isPackaged) {
+  // 打包后的应用
+  TOOLS_DIR = path.join(process.resourcesPath, 'tools');
+  YTDLP_PATH = process.env.YTDLP_PATH || path.join(TOOLS_DIR, 'yt-dlp' + (isWin ? '.exe' : ''));
+  FFMPEG_PATH = process.env.FFMPEG_PATH || (isMac
+    ? path.join(TOOLS_DIR, 'ffmpeg', 'ffmpeg')
+    : isWin
+      ? path.join(TOOLS_DIR, 'ffmpeg', 'bin', 'ffmpeg.exe')
+      : path.join(TOOLS_DIR, 'ffmpeg', 'ffmpeg')
+  );
+} else {
+  // 开发环境
+  TOOLS_DIR = path.join(__dirname, isMac ? 'tools-mac' : 'tools');
+  YTDLP_PATH = process.env.YTDLP_PATH || path.join(TOOLS_DIR, 'yt-dlp' + (isWin ? '.exe' : ''));
+  FFMPEG_PATH = process.env.FFMPEG_PATH || (isMac
+    ? path.join(TOOLS_DIR, 'ffmpeg', 'ffmpeg')
+    : isWin
+      ? path.join(TOOLS_DIR, 'ffmpeg', 'bin', 'ffmpeg.exe')
+      : path.join(TOOLS_DIR, 'ffmpeg', 'ffmpeg')
+  );
+}
+
+// 默认下载目录配置
+const DEFAULT_DOWNLOAD_DIR = isMac
+  ? path.join(require('os').homedir(), 'Downloads')
+  : isWin
+    ? 'C:\\Users\\Administrator\\Downloads'
+    : path.join(require('os').homedir(), 'Downloads');
+
+const DOWNLOAD_DIR = process.env.DOWNLOAD_DIR || DEFAULT_DOWNLOAD_DIR;
 
 // 确保下载目录存在
 if (!fs.existsSync(DOWNLOAD_DIR)) {

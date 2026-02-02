@@ -1496,6 +1496,67 @@ body {
   color: var(--color-text-tertiary);
 }
 
+/* 下载路径输入框 */
+.download-path-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.settings-input {
+  flex: 1;
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-text-secondary);
+  transition: all 0.3s ease;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+}
+
+.settings-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.settings-browse {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid var(--color-cyan);
+  border-radius: 10px;
+  color: var(--color-cyan);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.settings-browse svg {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-browse:hover {
+  background: rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.settings-browse:active {
+  transform: translateY(0);
+}
+
 .settings-actions {
   display: flex;
   gap: 12px;
@@ -1794,3 +1855,791 @@ body {
 .platform-icon[title="YouTube"]:hover svg {
   color: #ff0000;
 }
+
+/* ===== PWA 安装横幅 ===== */
+.pwa-install-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3000;
+  background: rgba(10, 10, 16, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border-highlight);
+  border-radius: 16px;
+  box-shadow: var(--shadow-glow-strong);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateX(-50%) translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+.pwa-install-content {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pwa-install-content > span {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.pwa-install-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pwa-install-btn,
+.pwa-install-dismiss {
+  padding: 8px 16px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.pwa-install-btn {
+  background: var(--gradient-primary);
+  border: none;
+  color: var(--color-bg);
+}
+
+.pwa-install-btn:hover {
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-1px);
+}
+
+.pwa-install-dismiss {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.pwa-install-dismiss:hover {
+  border-color: var(--color-text-tertiary);
+  color: var(--color-text-primary);
+}
+
+/* ===== 增强移动端适配 ===== */
+@media (max-width: 1024px) {
+  .app-container {
+    padding: 24px;
+  }
+
+  .header {
+    flex-wrap: wrap;
+    padding: 16px 20px;
+  }
+
+  .logo-title {
+    font-size: 24px;
+    letter-spacing: 4px;
+  }
+
+  .logo-subtitle {
+    font-size: 10px;
+  }
+
+  .main-content {
+    gap: 16px;
+  }
+
+  .section {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* 容器和头部 */
+  .app-container {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .header {
+    grid-column: 1;
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .header-left {
+    gap: 12px;
+  }
+
+  .logo-container {
+    width: 44px;
+    height: 44px;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+
+  .logo-title {
+    font-size: 18px;
+    letter-spacing: 3px;
+  }
+
+  .logo-subtitle {
+    font-size: 9px;
+    letter-spacing: 2px;
+  }
+
+  .header-right {
+    gap: 8px;
+  }
+
+  .status-badge {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .status-text {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+
+  /* 设置和调试按钮 */
+  .settings-btn,
+  .debug-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .settings-btn svg,
+  .debug-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* 主内容区 */
+  .main-content {
+    gap: 12px;
+  }
+
+  .section {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .section-header {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .section-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .section-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .section-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+
+  /* URL 输入区 */
+  .url-input-container {
+    margin-bottom: 16px;
+  }
+
+  .input-wrapper {
+    flex-wrap: wrap;
+    padding: 4px;
+    border-radius: 12px;
+  }
+
+  .input-prefix {
+    padding: 0 12px;
+  }
+
+  .input-prefix svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .url-input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+
+  .fetch-btn {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 12px;
+    border-radius: 10px;
+  }
+
+  /* 视频卡片 */
+  .video-card {
+    flex-direction: column;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .video-thumbnail {
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 比例 */
+    border-radius: 10px;
+  }
+
+  .video-info {
+    gap: 8px;
+  }
+
+  .video-title {
+    font-size: 14px;
+  }
+
+  .video-meta {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .meta-item {
+    font-size: 11px;
+  }
+
+  .meta-item svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* 配置区 */
+  .config-grid {
+    gap: 16px;
+  }
+
+  .config-group {
+    gap: 12px;
+  }
+
+  .config-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+
+  .option-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .option-card-inner {
+    padding: 14px;
+  }
+
+  .option-icon {
+    font-size: 24px;
+  }
+
+  .option-title {
+    font-size: 12px;
+  }
+
+  .option-desc {
+    font-size: 11px;
+  }
+
+  .option-check {
+    width: 16px;
+    height: 16px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .quality-grid {
+    justify-content: stretch;
+    gap: 8px;
+  }
+
+  .quality-inner {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 12px;
+    text-align: center;
+    border-radius: 50px;
+  }
+
+  /* 下载按钮 */
+  .download-btn {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .btn-content svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-text {
+    font-size: 14px;
+    letter-spacing: 3px;
+  }
+
+  /* 进度区 */
+  .progress-container {
+    gap: 16px;
+  }
+
+  .progress-bar-wrapper {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .progress-track {
+    height: 8px;
+  }
+
+  .progress-percentage {
+    font-size: 18px;
+    text-align: center;
+    min-width: auto;
+  }
+
+  .progress-stats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .stat-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .stat-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+
+  .stat-value {
+    font-size: 14px;
+  }
+
+  /* 完成区 */
+  .complete-container {
+    padding: 24px 16px;
+  }
+
+  .complete-icon-wrapper {
+    width: 80px;
+    height: 80px;
+  }
+
+  .complete-title {
+    font-size: 18px;
+    letter-spacing: 3px;
+  }
+
+  .complete-info {
+    font-size: 12px;
+  }
+
+  /* 侧边栏 */
+  .sidebar {
+    padding: 16px;
+    max-height: 350px;
+  }
+
+  .sidebar-header {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+  }
+
+  .sidebar-header svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .sidebar-header h3 {
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .refresh-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .refresh-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .history-item {
+    padding: 12px;
+  }
+
+  .history-type-icon {
+    font-size: 16px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .history-item-name {
+    font-size: 12px;
+  }
+
+  .history-item-size {
+    font-size: 10px;
+  }
+
+  .history-delete {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* 设置面板 */
+  .settings-content {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .settings-header {
+    padding: 16px 20px;
+  }
+
+  .settings-header h2 {
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+
+  .settings-close {
+    width: 36px;
+    height: 36px;
+  }
+
+  .settings-close svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .settings-body {
+    padding: 16px 20px;
+  }
+
+  .settings-section h3 {
+    font-size: 14px;
+  }
+
+  .settings-desc {
+    font-size: 12px;
+  }
+
+  .download-path-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .settings-input {
+    font-size: 11px;
+    padding: 10px 12px;
+  }
+
+  .settings-browse {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .settings-textarea {
+    min-height: 120px;
+    padding: 12px;
+    font-size: 11px;
+  }
+
+  .settings-actions {
+    flex-direction: column;
+  }
+
+  .settings-save,
+  .settings-clear {
+    width: 100%;
+    padding: 10px 20px;
+    font-size: 12px;
+  }
+
+  /* Toast 通知 */
+  .toast-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+  }
+
+  .toast {
+    padding: 12px 16px;
+  }
+
+  /* 平台页脚 */
+  .platform-footer {
+    padding: 20px 12px;
+  }
+
+  .platform-text {
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+
+  .platform-icons {
+    gap: 16px;
+  }
+
+  .platform-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .platform-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* PWA 安装横幅 - 移动端 */
+  .pwa-install-banner {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    transform: none;
+  }
+
+  .pwa-install-content {
+    padding: 12px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .pwa-install-content > span {
+    text-align: center;
+    font-size: 13px;
+  }
+
+  .pwa-install-actions {
+    justify-content: stretch;
+  }
+
+  .pwa-install-btn,
+  .pwa-install-dismiss {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+
+  /* 触摸优化 */
+  @media (hover: none) and (pointer: coarse) {
+    .fetch-btn:active,
+    .download-btn:active,
+    .settings-btn:active,
+    .debug-btn:active,
+    .refresh-btn:active,
+    .quality-btn:active {
+      transform: scale(0.97);
+    }
+
+    .history-item:active {
+      transform: translateX(2px) scale(0.98);
+    }
+
+    .option-card:active .option-card-inner {
+      transform: scale(0.98);
+    }
+  }
+}
+
+/* 小屏手机适配 */
+@media (max-width: 360px) {
+  .app-container {
+    padding: 8px;
+  }
+
+  .logo-title {
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+
+  .url-input {
+    font-size: 13px;
+  }
+
+  .quality-grid {
+    flex-direction: column;
+  }
+
+  .quality-inner {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+}
+
+/* 横屏适配 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .sidebar {
+    max-height: 200px;
+  }
+
+  .complete-container {
+    padding: 16px 20px;
+  }
+
+  .glow-blob {
+    display: none;
+  }
+}
+
+/* 深色模式优化（防止刘海屏遮挡） */
+@supports (padding: max(0px)) {
+  .app-container {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .header {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+}
+
+/* 减少 iPhone 上的 Safari UI 动画 */
+@supports (-webkit-touch-callout: none) {
+  .history-item,
+  .option-card,
+  .quality-btn {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* ===== Android 特定优化 ===== */
+
+/* Android 状态栏适配 */
+@supports (padding: max(0px)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Android 触摸反馈 */
+.option-card,
+.quality-btn,
+.history-item {
+  -webkit-tap-highlight-color: rgba(0, 255, 255, 0.2);
+  user-select: none;
+}
+
+/* Android 输入框自动填充背景色修复 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff;
+  -webkit-box-shadow: 0 0 0px 1000px var(--color-bg-secondary) inset;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: var(--color-cyan);
+}
+
+/* Android 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-cyan-dim);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-cyan);
+}
+
+/* Android 字体渲染优化 */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Android WebView 性能优化 */
+.app-container,
+.sidebar,
+.content {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Android 小屏幕优化 (< 360px) */
+@media (max-width: 359px) {
+  .header h1 {
+    font-size: 18px;
+  }
+
+  .option-card {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .url-input {
+    font-size: 14px;
+  }
+
+  .download-btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+}
+
+/* Android 折叠屏适配 */
+@media (min-width: 500px) and (max-height: 700px) {
+  .app-container {
+    flex-direction: row;
+  }
+
+  .sidebar {
+    width: 320px;
+    max-width: 320px;
+  }
+}
+

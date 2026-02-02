@@ -1,5 +1,132 @@
-// ===== Socket.IO 连接 =====
-const socket = io();
+(function() {
+// ===== Socket.IO 客户端 (Web 环境) =====
+let socket = null;
+let socketId = null;
+
+// Web 环境下建立 Socket.IO 连接
+function initSocketIO() {
+  if (typeof io !== 'undefined' && !socket) {
+    socket = io();
+
+    socket.on('connect', () => {
+      console.log('Socket.IO 已连接:', socket.id);
+      socketId = socket.id;
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Socket.IO 已断开');
+      socketId = null;
+    });
+
+    // 监听下载进度
+    socket.on('progress', (data) => {
+      console.log('下载进度:', data);
+
+      if (data.progress !== undefined) {
+        progressFill.style.width = `${data.progress}%`;
+        progressText.textContent = `${Math.round(data.progress)}%`;
+      }
+
+      if (data.speed) {
+        downloadSpeed.textContent = data.speed;
+      }
+
+      if (data.eta) {
+        etaTime.textContent = data.eta;
+      }
+
+      downloadStatus.textContent = data.status || '下载中...';
+    });
+
+    // 监听下载完成
+    socket.on('complete', (data) => {
+      console.log('下载完成:', data);
+      isDownloading = false;
+      downloadBtn.disabled = false;
+      downloadBtn.classList.remove('downloading');
+      progressSection.classList.remove('active');
+      completeSection.classList.add('active');
+
+      if (data.filename) {
+        completeInfo.textContent = `文件: ${data.filename} (${data.size})`;
+      }
+
+      showToast('下载完成！');
+      loadHistory();
+    });
+
+    // 监听下载错误
+    socket.on('error', (data) => {
+      console.error('下载错误:', data);
+      isDownloading = false;
+      downloadBtn.disabled = false;
+      downloadBtn.classList.remove('downloading');
+      progressSection.classList.remove('active');
+      showToast(data.error || '下载失败', 'error');
+    });
+  }
+}
+
+// ===== 状态变量 =====
+let domReady = false;
+
+// ===== Tauri API 检测 =====
+// 等待 Tauri API 加载（最多等待 2 秒）
+let invoke = null;
+let listen = null;
+let isTauri = false;
+
+function initTauriAPI() {
+  if (window.__TAURI__) {
+    invoke = window.__TAURI__.core?.invoke;
+    listen = window.__TAURI__.event?.listen;
+    isTauri = !!(invoke && listen);
+    return true;
+  }
+  return false;
+}
+
+// 立即尝试初始化
+if (!initTauriAPI()) {
+  // 如果 Tauri 还没准备好，等待一下
+  let attempts = 0;
+  const maxAttempts = 20;
+  const checkInterval = setInterval(() => {
+    attempts++;
+    if (initTauriAPI() || attempts >= maxAttempts) {
+      clearInterval(checkInterval);
+      console.log('Tauri API 检测完成:', {
+        hasTauri: !!window.__TAURI__,
+        isTauri,
+        attempts
+      });
+      // 如果 Tauri API 已准备好，等待 DOM 后初始化
+      if (isTauri) {
+        console.log('✓ Tauri API 已就绪');
+        if (domReady) {
+          initApp();
+        } else {
+          document.addEventListener('DOMContentLoaded', () => initApp(), { once: true });
+        }
+      }
+    }
+  }, 100);
+} else {
+  console.log('✓ Tauri API 立即可用');
+  // Tauri 立即可用，等待 DOM 后初始化
+  if (domReady) {
+    initApp();
+  } else {
+    document.addEventListener('DOMContentLoaded', () => initApp(), { once: true });
+  }
+}
+
+console.log('环境检测:', {
+  hasTauri: !!window.__TAURI__,
+  hasInvoke: !!invoke,
+  hasListen: !!listen,
+  isTauri
+});
 
 // ===== DOM 元素 =====
 const urlInput = document.getElementById('urlInput');
@@ -39,11 +166,24 @@ const settingsClose = document.getElementById('settingsClose');
 const cookiesInput = document.getElementById('cookiesInput');
 const cookiesSave = document.getElementById('cookiesSave');
 const cookiesClear = document.getElementById('cookiesClear');
+const downloadPathInput = document.getElementById('downloadPathInput');
+const browsePathBtn = document.getElementById('browsePathBtn');
+
+// 下载路径相关
+let currentDownloadPath = '';
 
 // 打开设置面板
 if (settingsBtn) {
-  settingsBtn.addEventListener('click', () => {
+  settingsBtn.addEventListener('click', async () => {
     cookiesInput.value = userCookies;
+    // 加载当前下载路径
+    try {
+      const path = await apiCall('get_download_directory');
+      currentDownloadPath = path;
+      downloadPathInput.value = path;
+    } catch (error) {
+      console.error('获取下载路径失败:', error);
+    }
     settingsModal.classList.add('active');
   });
 }
@@ -81,8 +221,41 @@ if (cookiesClear) {
   });
 }
 
+// 浏览选择下载路径
+if (browsePathBtn) {
+  browsePathBtn.addEventListener('click', async () => {
+    if (!isTauri) {
+      showToast('仅在桌面应用中支持', 'error');
+      return;
+    }
+
+    try {
+      // 使用 Tauri 的 dialog API 选择文件夹
+      const { open } = window.__TAURI__.dialog;
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: '选择下载目录'
+      });
+
+      if (selected && typeof selected === 'string') {
+        // 保存到后端
+        await apiCall('set_download_directory', { path: selected });
+        currentDownloadPath = selected;
+        downloadPathInput.value = selected;
+        showToast('下载路径已保存', 'success');
+      }
+    } catch (error) {
+      if (error !== 'Cancelled') {
+        showToast('设置路径失败: ' + error, 'error');
+      }
+    }
+  });
+}
+
 // ===== 格式化时长 =====
 function formatDuration(seconds) {
+  if (!seconds) return '--:--';
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
@@ -113,6 +286,34 @@ function showToast(message, type = 'info') {
   }, 3000);
 }
 
+// ===== API 调用包装器 =====
+async function apiCall(command, args = {}) {
+  console.log('API 调用:', { command, args, isTauri });
+
+  if (isTauri && invoke) {
+    try {
+      const result = await invoke(command, args);
+      console.log('API 结果:', result);
+      return result;
+    } catch (error) {
+      console.error('Tauri 调用错误:', error);
+      throw error;
+    }
+  } else {
+    // Web 环境降级到 fetch
+    const endpoint = args._endpoint || command;
+    delete args._endpoint;
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(args)
+    });
+    const result = await response.json();
+    console.log('Web API 结果:', result);
+    return result;
+  }
+}
+
 // ===== 获取视频信息 =====
 async function fetchVideoInfo() {
   const url = urlInput.value.trim();
@@ -126,21 +327,17 @@ async function fetchVideoInfo() {
   fetchBtn.innerHTML = '<span class="btn-loading">⟳</span>';
 
   try {
-    const response = await fetch('/api/info', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, cookies: userCookies })
+    const data = await apiCall('get_video_info', {
+      _endpoint: '/api/info',
+      url,
+      cookies: userCookies || null
     });
 
-    const data = await response.json();
-
     if (data.error) {
-      // 显示更详细的错误信息
       const errorMsg = data.error + (data.details ? `\n详细信息: ${data.details}` : '');
       showToast(errorMsg, 'error');
       console.error('获取视频信息失败:', data);
 
-      // 如果需要 cookies，提示用户
       if (data.needCookies) {
         setTimeout(() => {
           settingsBtn?.click();
@@ -154,12 +351,14 @@ async function fetchVideoInfo() {
     // 显示视频信息卡片
     videoThumbnail.style.backgroundImage = `url(${data.thumbnail})`;
     videoTitle.textContent = data.title;
-    videoUploader.textContent = data.uploader;
+    videoUploader.textContent = data.uploader || '未知';
     videoDuration.textContent = formatDuration(data.duration);
     videoCard.classList.add('active');
 
   } catch (error) {
-    showToast('获取视频信息失败', 'error');
+    // Tauri 返回的错误可能是字符串或对象
+    const errorMsg = typeof error === 'string' ? error : (error.message || String(error));
+    showToast('获取视频信息失败: ' + errorMsg, 'error');
     console.error('获取视频信息异常:', error);
   } finally {
     fetchBtn.disabled = false;
@@ -174,9 +373,13 @@ async function fetchVideoInfo() {
 
 // ===== 下载视频 =====
 async function downloadVideo() {
+  console.log('=== downloadVideo 被调用 ===');
+
   const url = urlInput.value.trim();
   const quality = document.querySelector('input[name="quality"]:checked')?.value;
   const downloadType = document.querySelector('input[name="downloadType"]:checked')?.value;
+
+  console.log('下载参数:', { url, quality, downloadType, isDownloading });
 
   if (!url) {
     showToast('请输入视频 URL', 'error');
@@ -203,26 +406,22 @@ async function downloadVideo() {
     showToast('正在获取视频信息...', 'info');
 
     try {
-      const infoResponse = await fetch('/api/info', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, cookies: userCookies })
+      const infoData = await apiCall('get_video_info', {
+        _endpoint: '/api/info',
+        url,
+        cookies: userCookies || null
       });
-
-      const infoData = await infoResponse.json();
 
       if (infoData.error) {
         showToast(infoData.error, 'error');
         return;
       }
 
-      // 保存视频信息
       currentVideoInfo = infoData;
 
-      // 显示视频信息卡片
       videoThumbnail.style.backgroundImage = `url(${infoData.thumbnail})`;
       videoTitle.textContent = infoData.title;
-      videoUploader.textContent = infoData.uploader;
+      videoUploader.textContent = infoData.uploader || '未知';
       videoDuration.textContent = formatDuration(infoData.duration);
       videoCard.classList.add('active');
 
@@ -249,29 +448,27 @@ async function downloadVideo() {
   downloadStatus.textContent = '初始化中...';
 
   try {
-    const response = await fetch('/api/download', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        url,
-        quality,
-        downloadType,
-        socketId: socket.id,
-        cookies: userCookies
-      })
+    const result = await apiCall('download_video', {
+      _endpoint: '/api/download',
+      url,
+      quality,
+      downloadType,
+      socketId,  // Web 环境需要传递 socketId
+      cookies: userCookies || null
     });
 
-    const data = await response.json();
-
-    if (data.error) {
-      showToast(data.error, 'error');
+    if (result.error) {
+      showToast(result.error, 'error');
       isDownloading = false;
       downloadBtn.disabled = false;
       downloadBtn.classList.remove('downloading');
+    } else {
+      showToast('下载已启动', 'success');
     }
 
   } catch (error) {
-    showToast('启动下载失败', 'error');
+    const errorMsg = typeof error === 'string' ? error : (error.message || String(error));
+    showToast('启动下载失败: ' + errorMsg, 'error');
     isDownloading = false;
     downloadBtn.disabled = false;
     downloadBtn.classList.remove('downloading');
@@ -281,10 +478,9 @@ async function downloadVideo() {
 // ===== 加载下载历史 =====
 async function loadHistory() {
   try {
-    const response = await fetch('/api/downloads');
-    const files = await response.json();
+    const files = await apiCall('get_downloads', { _endpoint: '/api/downloads' });
 
-    if (files.length === 0) {
+    if (!files || files.length === 0) {
       historyList.innerHTML = '<div class="history-empty">暂无下载记录</div>';
       return;
     }
@@ -295,8 +491,8 @@ async function loadHistory() {
 
     historyList.innerHTML = files.map(file => `
       <div class="history-item">
-        <span class="history-type-icon">${typeIcon(file.type)}</span>
-        <span class="history-item-name" onclick="downloadFile('${file.filename}')" title="点击下载">${file.filename}</span>
+        <span class="history-type-icon">${typeIcon(file.file_type)}</span>
+        <span class="history-item-name">${file.filename}</span>
         <span class="history-item-size">${file.size}</span>
         <button class="history-delete" onclick="deleteFile('${file.filename}')" title="删除">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -308,37 +504,7 @@ async function loadHistory() {
 
   } catch (error) {
     console.error('加载历史失败:', error);
-  }
-}
-
-// ===== 下载文件 =====
-async function downloadFile(filename) {
-  try {
-    showToast('正在下载...');
-
-    const response = await fetch(`/download/${filename}`);
-
-    if (!response.ok) {
-      throw new Error('下载失败');
-    }
-
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    showToast('下载完成！');
-
-  } catch (error) {
-    console.error('下载错误:', error);
-    showToast('下载失败，请重试', 'error');
+    historyList.innerHTML = '<div class="history-empty">加载失败</div>';
   }
 }
 
@@ -349,109 +515,70 @@ async function deleteFile(filename) {
   }
 
   try {
-    const response = await fetch(`/api/files/${filename}`, {
-      method: 'DELETE'
+    await apiCall('delete_file', {
+      filename,
+      _endpoint: `/api/files/${filename}`
     });
-
-    if (response.ok) {
-      showToast('文件已删除');
-      loadHistory();
-    } else {
-      showToast('删除失败', 'error');
-    }
+    showToast('文件已删除');
+    loadHistory();
   } catch (error) {
-    showToast('删除失败', 'error');
+    showToast('删除失败: ' + error.message, 'error');
   }
 }
 
-// ===== Socket.IO 事件监听 =====
-socket.on('progress', (data) => {
-  console.log('收到进度更新:', data);
+// ===== Tauri 事件监听 =====
+if (isTauri && listen) {
+  // 监听下载开始
+  listen('download-started', (event) => {
+    console.log('下载已启动:', event.payload);
+  });
 
-  if (data.progress !== undefined) {
-    progressFill.style.width = `${data.progress}%`;
-    progressText.textContent = `${Math.round(data.progress)}%`;
-  }
+  // 监听下载完成
+  listen('download-complete', (event) => {
+    console.log('下载完成:', event.payload);
+    isDownloading = false;
+    downloadBtn.disabled = false;
+    downloadBtn.classList.remove('downloading');
+    progressSection.classList.remove('active');
+    completeSection.classList.add('active');
+    showToast('下载完成！');
+    loadHistory();
+  });
 
-  if (data.speed) {
-    downloadSpeed.textContent = data.speed;
-  }
+  // 监听下载进度
+  listen('download-progress', (event) => {
+    const data = event.payload;
+    console.log('下载进度:', data);
 
-  if (data.eta) {
-    etaTime.textContent = data.eta;
-  }
-
-  const statusMap = {
-    'downloading': '下载中...',
-    'processing': '处理中...'
-  };
-  downloadStatus.textContent = statusMap[data.status] || data.status;
-});
-
-socket.on('connect', () => {
-  console.log('Socket.IO 已连接, ID:', socket.id);
-});
-
-socket.on('disconnect', () => {
-  console.log('Socket.IO 已断开');
-});
-
-socket.on('error', (error) => {
-  console.error('Socket.IO 错误:', error);
-});
-
-socket.on('complete', async (data) => {
-  isDownloading = false;
-  downloadBtn.disabled = false;
-  downloadBtn.classList.remove('downloading');
-
-  progressSection.classList.remove('active');
-  completeSection.classList.add('active');
-  completeInfo.textContent = `${data.filename} (${data.size})`;
-
-  showToast('下载完成！正在保存到本地...');
-
-  // 自动触发浏览器下载
-  try {
-    const response = await fetch(`/download/${data.filename}`);
-
-    if (response.ok) {
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = data.filename;
-      document.body.appendChild(a);
-      a.click();
-
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      showToast('文件已保存到本地！');
-    } else {
-      showToast('自动下载失败，请从历史记录中手动下载', 'error');
+    if (data.progress !== undefined) {
+      progressFill.style.width = `${data.progress}%`;
+      progressText.textContent = `${Math.round(data.progress)}%`;
     }
-  } catch (error) {
-    console.error('自动下载错误:', error);
-    showToast('自动下载失败，请从历史记录中手动下载', 'error');
-  }
 
-  // 刷新历史列表
-  loadHistory();
-});
+    if (data.speed) {
+      downloadSpeed.textContent = data.speed;
+    }
 
-socket.on('error', (data) => {
-  isDownloading = false;
-  downloadBtn.disabled = false;
-  downloadBtn.classList.remove('downloading');
+    if (data.eta) {
+      etaTime.textContent = data.eta;
+    }
 
-  progressSection.classList.remove('active');
-  showToast(data.error || '下载失败', 'error');
-});
+    downloadStatus.textContent = data.status || '下载中...';
+  });
+
+  // 监听错误
+  listen('download-error', (event) => {
+    const error = event.payload;
+    console.error('下载错误:', error);
+    isDownloading = false;
+    downloadBtn.disabled = false;
+    downloadBtn.classList.remove('downloading');
+    progressSection.classList.remove('active');
+    showToast(error.error || '下载失败', 'error');
+  });
+}
 
 // ===== 选项卡交互 =====
-// 下载类型选项卡
 document.querySelectorAll('.option-card').forEach(card => {
   card.addEventListener('click', () => {
     document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
@@ -460,7 +587,6 @@ document.querySelectorAll('.option-card').forEach(card => {
   });
 });
 
-// 清晰度选项卡
 document.querySelectorAll('.quality-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
@@ -470,11 +596,28 @@ document.querySelectorAll('.quality-btn').forEach(btn => {
 });
 
 // ===== 事件监听 =====
-fetchBtn.addEventListener('click', fetchVideoInfo);
+console.log('绑定事件监听器...');
+console.log('fetchBtn:', fetchBtn);
+console.log('downloadBtn:', downloadBtn);
+console.log('refreshBtn:', refreshBtn);
 
-downloadBtn.addEventListener('click', downloadVideo);
+if (fetchBtn) {
+  fetchBtn.addEventListener('click', () => {
+    console.log('fetchBtn 被点击');
+    fetchVideoInfo();
+  });
+}
 
-refreshBtn.addEventListener('click', loadHistory);
+if (downloadBtn) {
+  downloadBtn.addEventListener('click', () => {
+    console.log('downloadBtn 被点击');
+    downloadVideo();
+  });
+}
+
+if (refreshBtn) {
+  refreshBtn.addEventListener('click', loadHistory);
+}
 
 urlInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
@@ -482,43 +625,10 @@ urlInput.addEventListener('keypress', (e) => {
   }
 });
 
-// 当 URL 改变时，重置视频信息
 urlInput.addEventListener('input', () => {
   currentVideoInfo = null;
   videoCard.classList.remove('active');
 });
-
-// ===== 调试功能 - 测试 YouTube 连接 =====
-const debugBtn = document.getElementById('debugBtn');
-if (debugBtn) {
-  debugBtn.addEventListener('click', async () => {
-    showToast('正在测试 YouTube 连接...', 'info');
-
-    try {
-      // 先检查系统状态
-      const debugResponse = await fetch('/api/debug');
-      const debugInfo = await debugResponse.json();
-
-      console.log('系统信息:', debugInfo);
-      showToast(`yt-dlp 版本: ${debugInfo.ytdlp_version}`, 'info');
-
-      // 测试 YouTube 连接
-      const ytResponse = await fetch('/api/test-youtube');
-      const ytResult = await ytResponse.json();
-
-      if (ytResult.success) {
-        showToast(`✓ YouTube 连接正常!\n测试视频: ${ytResult.title}`, 'success');
-      } else {
-        showToast(`✗ YouTube 连接失败!\n${ytResult.message}\n${ytResult.error || ''}`, 'error');
-        console.error('YouTube 测试失败:', ytResult);
-      }
-
-    } catch (error) {
-      showToast('调试请求失败', 'error');
-      console.error('调试错误:', error);
-    }
-  });
-}
 
 // ===== 粒子背景动画 =====
 class ParticleSystem {
@@ -591,16 +701,62 @@ class ParticleSystem {
   }
 }
 
-// ===== 初始化 =====
-document.addEventListener('DOMContentLoaded', () => {
-  // 初始化粒子背景
+// ===== 初始化应用 =====
+async function initApp() {
+  console.log('=== 初始化应用 ===');
+
+  // Web 环境下初始化 Socket.IO
+  if (!isTauri) {
+    initSocketIO();
+  }
+
   const particleCanvas = document.getElementById('particles');
   if (particleCanvas) {
     new ParticleSystem(particleCanvas).animate();
   }
 
-  // 加载下载历史
+  // 测试 Tauri API
+  if (isTauri) {
+    console.log('测试 Tauri API...');
+    try {
+      const debugInfo = await apiCall('get_debug_info', {});
+      console.log('调试信息:', debugInfo);
+      showToast('Tauri 就绪！工具路径: ' + debugInfo.ytdlp_path, 'success');
+    } catch (error) {
+      console.error('Tauri API 测试失败:', error);
+      showToast('Tauri API 错误: ' + error, 'error');
+    }
+  } else {
+    console.log('⚠ Web 模式 (部分功能可能不可用)');
+  }
+
   loadHistory();
 
-  // 页面加载动画已在 HTML 中的 script 标签处理
+  const sections = document.querySelectorAll('[data-animate]');
+  sections.forEach((section, index) => {
+    section.style.opacity = '0';
+    section.style.transform = 'translateY(30px)';
+    setTimeout(() => {
+      section.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+      section.style.opacity = '1';
+      section.style.transform = 'translateY(0)';
+    }, 100 * index);
+  });
+}
+
+// ===== DOM 加载完成事件 =====
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('=== DOMContentLoaded ===');
+  domReady = true;
+
+  // 如果不是 Tauri 环境（或 Tauri 未检测到），直接初始化
+  if (!isTauri && !window.__TAURI__) {
+    setTimeout(() => {
+      if (!isTauri) {
+        console.log('Web 环境，直接初始化');
+        initApp();
+      }
+    }, 500);
+  }
 });
+})();

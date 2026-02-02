@@ -1,6 +1,11 @@
 # 依赖
 node_modules/
 
+# 构建输出
+dist/
+dist-v5/
+build/
+
 # 下载文件
 downloads/*.mp4
 downloads/*.mkv
@@ -28,3 +33,10 @@ Thumbs.db
 # 临时文件
 *.tmp
 *.temp
+
+# 可执行文件（本地构建）
+*.exe
+*.apk
+
+# 临时脚本
+tmpclaude-*

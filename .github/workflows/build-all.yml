@@ -1,0 +1,182 @@
+name: Build Cross-Platform Apps
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'server.js'
+      - 'electron-main.js'
+      - 'electron-preload.js'
+      - 'public/**'
+      - 'package.json'
+      - '.github/workflows/build-all.yml'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:  # 允许手动触发
+    inputs:
+      create_release:
+        description: '创建 GitHub Release'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build-windows:
+    name: 🪟 Build Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Windows tools
+        run: |
+          echo "🔍 Checking Windows tools..."
+          if (Test-Path "tools\yt-dlp.exe") {
+              ./tools/yt-dlp.exe --version
+          } else {
+              Write-Host "⚠️  yt-dlp.exe not found in tools/"
+          }
+          if (Test-Path "tools\ffmpeg\bin\ffmpeg.exe") {
+              ./tools/ffmpeg/bin/ffmpeg.exe -version | Select-Object -First 1
+          } else {
+              Write-Host "⚠️  ffmpeg.exe not found in tools/"
+          }
+
+      - name: Build Windows app
+        run: npm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List output files
+        run: |
+          echo "📦 Windows Build artifacts:"
+          Get-ChildItem dist-v5/ | ForEach-Object { Write-Host "$($_.Name.PadRight(50)) $([math]::Round($_.Length / 1KB, 2)) KB" }
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Portable
+          path: dist-v5/*.exe
+          retention-days: 30
+
+  build-macos:
+    name: 🍎 Build macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download yt-dlp for macOS
+        run: |
+          mkdir -p tools-mac
+          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o tools-mac/yt-dlp
+          chmod +x tools-mac/yt-dlp
+          echo "✅ yt-dlp version:"
+          ./tools-mac/yt-dlp --version
+
+      - name: Install ffmpeg
+        run: |
+          brew install ffmpeg
+          mkdir -p tools-mac/ffmpeg
+          cp $(which ffmpeg) tools-mac/ffmpeg/
+          echo "✅ ffmpeg version:"
+          tools-mac/ffmpeg/ffmpeg -version | head -1
+
+      - name: Build macOS app (Intel & Apple Silicon)
+        run: npm run build:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List output files
+        run: |
+          echo "📦 macOS Build artifacts:"
+          ls -lh dist-v5/
+
+      - name: Upload Intel DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-Intel-DMG
+          path: dist-v5/*-x64.dmg
+          retention-days: 30
+
+      - name: Upload Intel ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-Intel-ZIP
+          path: dist-v5/*-x64.zip
+          retention-days: 30
+
+      - name: Upload Apple Silicon DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-AppleSilicon-DMG
+          path: dist-v5/*-arm64.dmg
+          retention-days: 30
+
+      - name: Upload Apple Silicon ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-AppleSilicon-ZIP
+          path: dist-v5/*-arm64.zip
+          retention-days: 30
+
+  create-release:
+    name: 📦 Create Release
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.create_release == true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display artifacts
+        run: |
+          echo "📦 Downloaded artifacts:"
+          ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release Summary
+        run: |
+          echo "## 🎉 Release Created!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Available Downloads" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Format | Architecture |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|--------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Windows | Portable (.exe) | x64 |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS | DMG / ZIP | Intel (x64) |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS | DMG / ZIP | Apple Silicon (arm64) |" >> $GITHUB_STEP_SUMMARY
